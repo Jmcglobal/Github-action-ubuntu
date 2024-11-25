@@ -63,4 +63,4 @@ jobs:
             cd /root/Nginx
             docker compose pull
             docker compose up -d --no-deps --force-recreate --remove-orphans
-            docker images --format '{{.ID}}\t{{.CreatedAt}}\t{{.Repository}}:{{.Tag}}' | sort -k2 | awk '{if(NR>2) print $1}' | xargs -I {} docker rmi {}
+            docker images --format '{{.ID}}\t{{.CreatedAt}}\t{{.Repository}}:{{.Tag}}' | sort -k2 | head -n -1 | awk '{if(NR>1) print $1}' | xargs -I {} docker rmi {}
