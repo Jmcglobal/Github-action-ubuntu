@@ -19,7 +19,7 @@ jobs:
         run: echo "IMAGE_TAG=$(date +%Y-%m-%d-%H-%M)-${GITHUB_SHA::4}" >> $GITHUB_ENV
 
       - name: Build Docker image
-        run: docker build -t $(echo $REGISTRY)/$(echo $IMAGE_NAME):$IMAGE_TAG
+        run: docker build -t $(echo $REGISTRY)/$(echo $IMAGE_NAME):$IMAGE_TAG .
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
