@@ -1,6 +1,6 @@
 services:
   app:
-    image: registry.digitalocean.com/red-onion-container-registry/kiwi-app-dev:latest
+    image: latest
     ports:
       - "3003:3003"
     environment:

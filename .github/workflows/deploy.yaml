@@ -31,7 +31,7 @@ jobs:
 
       - name: Edit docker-compose Image Tag
         run: | 
-          'sed -i "3 s/image:.*/image: $(echo $REGISTRY)\\/$(echo $IMAGE_NAME):$IMAGE_TAG/" docker-compose.yaml'
+          sed -i '' "3 s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
           cat docker-compose.yaml
 
       - name: Remove all old images
