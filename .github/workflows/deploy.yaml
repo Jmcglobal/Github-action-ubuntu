@@ -33,7 +33,7 @@ jobs:
         run: |
           pwd
           ls -la
-          sed -i '' "3 s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|" $GITHUB_WORKSPACE/docker-compose.yaml
+          sed -i "3 s|image:.*|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
           cat docker-compose.yaml
 
       - name: Remove all old images
