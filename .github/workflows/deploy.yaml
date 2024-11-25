@@ -1,7 +1,7 @@
 name: CICD - Deploy to Do
 on:
   push:
-    branches: [develop]
+    branches: [master]
 
 
 env:
