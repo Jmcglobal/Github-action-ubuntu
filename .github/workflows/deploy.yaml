@@ -1,0 +1,63 @@
+name: CICD - Deploy to Do
+on:
+  push:
+    branches: [develop]
+
+
+env:
+  REGISTRY: 'registry.digitalocean.com/red-onion-container-registry'
+  IMAGE_NAME: 'kiwi-app-test'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Set Image Tag
+        run: echo "IMAGE_TAG=$(date +%Y-%m-%d-%H-%M)-${GITHUB_SHA::4}" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t $(echo $REGISTRY)/$(echo $IMAGE_NAME):$IMAGE_TAG
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 6000
+
+      - name: Edit docker-compose Image Tag
+        run: | 
+          'sed -i "3 s/image:.*/image: $(echo $REGISTRY)\\/$(echo $IMAGE_NAME):$IMAGE_TAG/" $GITHUB_WORKSPACE/docker-compose.yaml'
+          cat docker-compose.yaml
+
+      - name: Remove all old images
+        run: if [ ! -z "$(doctl registry repository list | grep "$(echo $IMAGE_NAME)")" ]; then doctl registry repository delete-manifest $(echo $IMAGE_NAME) $(doctl registry repository list-tags $(echo $IMAGE_NAME) | grep -o "sha.*") --force; else echo "No repository"; fi
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push $(echo $REGISTRY)/$(echo $IMAGE_NAME):$IMAGE_TAG
+
+      - name: Copy Docker-compose file to the server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST}}
+          username: ${{ secrets.USERNAME}}
+          key: ${{ secrets.SSHKEY}}
+          port: ${{ secrets.PORT }}
+          source: "./docker-compose.yaml"
+          target: "/root/Nginx/"
+
+      - name: Deploy to Digital Ocean droplet via SSH action
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSHKEY }}
+          envs: IMAGE_NAME,REGISTRY,{{ secrets.REGISTRY_ACCESS_TOKEN }}
+          script: |
+            cd /root/Nginx
+            docker compose pull
+            docker-compose up -d --no-deps --force-recreate --remove-orphans
